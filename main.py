@@ -14,9 +14,12 @@ chain = prompt | model
 
 while True:
     question = input("Ask anything (q to leave):")
+    print("\n\n")
     if question == "q":
         break
     else:
         result = chain.invoke({"question": question})
+        print(result)
+        print("\n\n")
 
     
