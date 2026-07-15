@@ -1,6 +1,26 @@
 from langchain_community.utilities import DuckDuckGoSearchAPIWrapper
 
+
+def clean_context(raw_results):
+    """Clean and returns only the Title and Summary of each raw result"""
+    cleaned_context = []
+
+    for i, result in enumerate(raw_results, start=1):
+
+        title = result.get('title', 'No Title') 
+        snippet = result.get('snippet', 'No Summary')
+
+        cleaned_context.append(
+            f"Result {i}:\n"
+            f"Title: {title}\n"
+            f"Summary: {snippet}"
+        )
+
+    return "\n\n".join(cleaned_context)
+
+
 def search_web(query):
+    """Search the best 6 results via DuckDuckGo to the query"""
     try:
         wrapper = DuckDuckGoSearchAPIWrapper()
 
@@ -9,15 +29,10 @@ def search_web(query):
         if not raw_results:
             return None
 
-        cleaned_context = ""
-        for i, result in enumerate(raw_results, 1):
-            title = result.get('title', 'No Title')
-            snippet = result.get('snippet', 'No Summary')
-            
-            cleaned_context += f"Result {i}:\nTitle: {title}\nSummary: {snippet}\n\n"
-            
-        return cleaned_context.strip()
+        context = clean_context(raw_results)
+
+        return context
         
     except Exception as e:
-        print(f"Erro ao pesquisar na web: {e}")
+        print(f"Error searching in web: {e}")
         return None

@@ -1,90 +1,424 @@
-# AI Robot - Local Assistant with Dynamic Memory (RAG)
+# AI Robot - Local Multimodal Assistant with Dynamic Memory (RAG)
 
-This is a local intelligent assistant designed to run on a Virtual Machine (VM - Ubuntu Server 24.04.4) or a Raspberry Pi. It leverages a local Large Language Model (**Qwen 2.5** - for now) and a vector database (**ChromaDB**) to store, search, and recall facts shared by the user during real-time conversations.
+A local intelligent assistant designed to run on resource-constrained environments such as a Virtual Machine (Ubuntu Server 24.04.4) or a Raspberry Pi.
+
+The project combines a local Large Language Model (**Qwen 2.5** for now), **Retrieval-Augmented Generation (RAG)**, and a persistent vector database (**ChromaDB**) to create an assistant capable of:
+
+* Answering general knowledge questions using web retrieval.
+* Storing and recalling personal information shared by the user.
+* Running completely locally without relying on external LLM APIs.
+* Evolving toward a multimodal assistant with vision and voice capabilities.
 
 ---
 
-## 🛠️ Tech Stack
+# 🛠️ Tech Stack
+
+## Core
 
 * **Python 3.12+**
-* **Ollama** (for running local models)
-  * LLM: `ollama pull qwen2.5:3b` (temporaly)
-  * Embeddings: `nomic-embed-text` (temporaly)
-* **LangChain** (RAG orchestration)
-* **ChromaDB** (Vector database for local memory persistence)
+* **Ollama** - Local model execution
+* **LangChain** - LLM orchestration and RAG pipeline management
+* **ChromaDB** - Persistent vector database for user memory
 
----
+## Current Models
+* **qwen2.5:3b**
 
-## 🧠 Intelligent Routing System (How it Works) - (Early Architecture)
+### Large Language Model
 
-Unlike standard RAG systems that query everything simultaneously (clogging the RAM of a Raspberry Pi), this assistant uses a **Zero-Shot Intent Classifier** before processing any query:
-
-```
-                  [ User Input ]
-                        │
-              ┌─────────┴─────────┐
-              ▼                   ▼
-      [ Intent Classifier (Qwen 2.5:3b) ]
-      /                 │                 \
-     /                  │                  \
-(INTERNET)             (MEMORY)            (CASUAL)
-    ▼                     ▼                    ▼
-[Web Search RAG]    [ChromaDB Retrieval]   [Direct Response]
-(Live & Hist.)       (Personal Facts)      (No context needed)
-```
-
-1. **INTERNET:** Triggered for general knowledge, sports, weather, or history (e.g., *"When did the World War II start?"*). It automatically generates keyword-optimized search queries.
-2. **MEMORY:** Triggered for personal questions (e.g., *"What is my dog's name?"*). It queries ChromaDB. If the user makes an assertive statement (e.g., *"My favorite color is blue"*), it **automatically saves** it as a new memory.
-3. **CASUAL:** For greetings and small talk, saving computation power and bypassing all database queries.
-
----
-
-## 🚀 How to Run Locally
-
-Follow these steps to set up your environment and run the assistant on your machine.
-
-If you are working with the VM, you can open a terminal in your PC to interact easier with the terminal of the server:
-```bash
-ssh robot@192.168.1.195 (or the IP that the VM gets)
-```
-
-
-# 1. Set Up the Ollama Server
-Make sure Ollama is installed and running on your system, and that you have downloaded both required models:
-
-## Download the Large Language Model (LLM)
 ```bash
 ollama pull qwen2.5:3b
 ```
 
-## Download the dedicated Embeddings model
+Used for:
+
+* Query classification.
+* Search query optimization.
+* Final response generation.
+
+*(Temporary model selection. Future versions may use different local models depending on hardware constraints.)*
+
+### Embeddings Model
+
 ```bash
 ollama pull nomic-embed-text
 ```
 
-# 2. Set Up Local Environment
+Used for:
 
-Open a terminal in your VM and run the following commands:
+* Converting user memories into vector embeddings.
+* Similarity search inside ChromaDB.
 
-## 1. Navigate to the project directory
+---
+
+# 🧠 Current Architecture
+
+The assistant uses an intelligent routing system before generating responses.
+
+Instead of sending every request through the same retrieval pipeline, the system first performs **zero-shot intent classification using a local LLM**.
+
+The classifier determines whether the user request requires:
+
+* Web knowledge.
+* Personal memory retrieval.
+* No external context.
+
+```
+                    [ User Input ]
+                          |
+                          v
+          [ Zero-Shot Intent Classification ]
+                    (Qwen 2.5)
+                          |
+        ┌─────────────────┼─────────────────┐
+        ▼                 ▼                 ▼
+
+ [WEB KNOWLEDGE]   [PERSONAL MEMORY]   [NO RETRIEVAL]
+
+        ▼                 ▼                 ▼
+
+ Web Search RAG     ChromaDB RAG       Direct LLM
+ (External Data)    (User Facts)       Conversation
+
+        └─────────────────┼─────────────────┘
+                          |
+                          v
+
+                 [ Context + User Query ]
+
+                          |
+                          v
+
+                    [ LLM Response ]
+```
+
+---
+
+# 🔎 Retrieval-Augmented Generation (RAG)
+
+The assistant uses RAG to provide the language model with relevant information before generating an answer.
+
+The basic flow:
+
+```
+User Question
+      |
+      v
+Retrieve Relevant Information
+      |
+      v
+Add Context to Prompt
+      |
+      v
+Generate Answer
+```
+
+The project currently uses two retrieval sources.
+
+---
+
+## 🌐 Web Search RAG
+
+Used for:
+
+* History.
+* Sports.
+* Weather. (not functional yet)
+* Current events.
+* General knowledge.
+
+Before searching, the assistant performs query optimization:
+
+Example:
+
+```
+User:
+"Who won Euro 2004?"
+
+Generated Search Query:
+"Euro 2004 final winner"
+```
+
+This improves the quality of retrieved information.
+
+Pipeline:
+
+```
+User Question
+      |
+      v
+Query Optimization (LLM)
+      |
+      v
+DuckDuckGo Search
+      |
+      v
+Search Context
+      |
+      v
+LLM Response
+```
+
+---
+
+## 🧠 Personal Memory RAG
+
+Used for user-specific information:
+
+Examples:
+
+```
+"What is my dog's name?"
+
+"What is my favorite color?"
+```
+
+The assistant stores user information as vector documents:
+
+```
+User Fact
+    |
+    v
+Embedding Model
+    |
+    v
+ChromaDB
+    |
+    v
+Similarity Search
+    |
+    v
+Relevant Memory
+    |
+    v
+LLM Response
+```
+
+Example:
+
+User:
+
+```
+"My favorite color is blue."
+```
+
+The assistant stores this information and can later retrieve it when needed.
+
+---
+
+# 🤖 Agentic RAG (Future Architecture)
+
+The current version uses an intelligent router that selects the appropriate retrieval path.
+
+The next evolution is moving toward an **Agentic RAG architecture**, where the LLM becomes responsible for deciding which tools and knowledge sources are required.
+
+Current architecture:
+
+```
+User
+ |
+Intent Classifier
+ |
++--------------+
+|              |
+Web Search   Memory
+ |
+LLM Response
+```
+
+Future Agentic RAG architecture:
+
+```
+                    [ User Input ]
+
+                          |
+
+                          v
+
+                    [ LLM Agent ]
+
+                          |
+
+        ┌─────────────────┼─────────────────┐
+
+        ▼                 ▼                 ▼
+
+ [Memory Tool]     [Web Search Tool]   [Vision Tool]
+
+        |                 |                 |
+
+        └─────────────────┼─────────────────┘
+
+                          |
+
+                          v
+
+                 [ Context Aggregation ]
+
+                          |
+
+                          v
+
+                    [ Final Answer ]
+```
+
+The agent will be able to:
+
+* Decide which tools are necessary.
+* Search external information when required.
+* Retrieve personal memories.
+* Analyze images.
+* Combine multiple sources before answering.
+
+---
+
+# 👁️ Future Multimodal Capabilities
+
+The long-term goal is to transform this project into a local multimodal assistant.
+
+## Vision Integration
+
+Planned pipeline:
+
+```
+Camera / Image Input
+        |
+        v
+     OpenCV
+        |
+        v
+ Vision Language Model
+        |
+        v
+ Image Understanding
+        |
+        v
+ Main Assistant
+```
+
+Possible capabilities:
+
+* Image analysis.
+* Object recognition.
+* Camera-based interaction.
+* Visual question answering.
+
+OpenCV will handle image processing and preparation, while a vision-capable LLM will handle understanding.
+
+---
+
+## Voice Interaction
+
+Planned voice pipeline:
+
+### Input
+
+```
+Microphone
+     |
+     v
+Speech-to-Text Model
+     |
+     v
+Assistant Pipeline
+     |
+     v
+Response Generation
+```
+
+### Output
+
+```
+Generated Text
+      |
+      v
+Text-to-Speech Model
+      |
+      v
+Speaker Output
+```
+
+The goal is a complete hands-free interaction system.
+
+---
+
+# 🚀 How to Run Locally
+
+## 1. Install and Start Ollama
+
+Make sure Ollama is installed and running.
+
+Download the required models:
+
+### Language Model
+
+```bash
+ollama pull qwen2.5:3b
+```
+
+### Embeddings Model
+
+```bash
+ollama pull nomic-embed-text
+```
+
+---
+
+## 2. Setup Environment
+
+Navigate to the project directory:
+
 ```bash
 cd ~/robo_ia
 ```
 
-## 2. Activate the virtual environment
+Activate the virtual environment:
+
 ```bash
 source venv/bin/activate
 ```
 
-## 3. Ensure all dependencies are installed
+Install dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
-# 3. Run the model
+---
 
-With your virtual environment active, run the main script:
+## 3. Run the Assistant
+
+With the virtual environment active:
 
 ```bash
 python3 main.py
 ```
+
+---
+
+# 🗺️ Roadmap
+
+## Completed
+
+* [x] Local LLM inference with Ollama.
+* [x] Persistent ChromaDB memory.
+* [x] RAG-based personal memory retrieval.
+* [x] Web search retrieval.
+* [x] Intelligent query routing.
+* [x] Streaming responses.
+
+## Planned
+
+* [ ] Agentic RAG architecture.
+* [ ] Tool selection by LLM reasoning.
+* [ ] Vision model integration.
+* [ ] Camera interaction.
+* [ ] Speech-to-text interaction.
+* [ ] Text-to-speech responses.
+* [ ] Raspberry Pi optimization.
+* [ ] Improved memory extraction and management.
+
+---
+
+# Project Vision
+
+The goal of this project is to create a fully local personal AI assistant capable of understanding, remembering, seeing, and interacting with the user while maintaining privacy by running locally whenever possible.

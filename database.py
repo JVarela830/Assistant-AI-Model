@@ -4,42 +4,38 @@ from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
 CHROMA_PATH = "chroma"
-DATA_PATH = "data"
+SIMILARITY_THRESHOLD = 1.0 # Maximum embedding distance considered relevant
+
+embeddings = OllamaEmbeddings(model="nomic-embed-text") 
+
+db = Chroma(
+persist_directory=CHROMA_PATH, 
+embedding_function=embeddings
+)
 
 
-def get_database():
-
-    embeddings = OllamaEmbeddings(model="nomic-embed-text") #qwen model cannot do the embedding's work
-
-    db = Chroma(
-        persist_directory=CHROMA_PATH, 
-        embedding_function=embeddings
+def add_document(fact):
+    """Add a new fact of the user to the database"""
+    document = Document(
+        page_content = fact,
+        metadata={"source": "user_input"}
     )
 
-    return db
-
-
-def update_database(data):
-    db = get_database()
-    new_document = Document(
-        page_content= data,
-        metadata={"new_info": "data"}
-    )
-
-    db.add_documents([new_document])
+    db.add_documents([document])
 
 
 def search_data(query):
-    db = get_database()
+    """Return the text of documents similar to the query."""
     results = db.similarity_search_with_score(query, k=3)
 
-    if len(results) == 0:
+    if not results:
         return None
     
-    valid_documents = []
-    for doc, score in results:
-        if score < 1.0: 
-            valid_documents.append(doc.page_content)
+    valid_documents = [
+        doc.page_content
+        for doc, score in results
+        if score < SIMILARITY_THRESHOLD
+    ]
 
     if not valid_documents:
         return None
