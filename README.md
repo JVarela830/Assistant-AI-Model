@@ -1,6 +1,6 @@
 # AI Robot - Local Assistant with Dynamic Memory (RAG)
 
-This is a local intelligent assistant designed to run on a Virtual Machine (VM) or a Raspberry Pi. It leverages a local Large Language Model (**Qwen 2.5** - for now) and a vector database (**ChromaDB**) to store, search, and recall facts shared by the user during real-time conversations.
+This is a local intelligent assistant designed to run on a Virtual Machine (VM - Ubuntu Server 24.04.4) or a Raspberry Pi. It leverages a local Large Language Model (**Qwen 2.5** - for now) and a vector database (**ChromaDB**) to store, search, and recall facts shared by the user during real-time conversations.
 
 ---
 
