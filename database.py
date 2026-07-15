@@ -9,7 +9,7 @@ DATA_PATH = "data"
 
 def get_database():
 
-    embeddings = OllamaEmbeddings(model="qwen2.5:1.5b")
+    embeddings = OllamaEmbeddings(model="nomic-embed-text") #qwen model cannot do the embedding's work
 
     db = Chroma(
         persist_directory=CHROMA_PATH, 
@@ -31,12 +31,17 @@ def update_database(data):
 
 def search_data(query):
     db = get_database()
-    results = db.similarity_search_with_relevance_scores(query, k=3)
+    results = db.similarity_search_with_score(query, k=3)
 
-    if len(results) == 0 or results[0][1] < 0.7:
-        print(f"Unable to find matching results.")
+    if len(results) == 0:
         return None
     
-    similarity_data = [doc.page_content for doc, score in results]
+    valid_documents = []
+    for doc, score in results:
+        if score < 1.0: 
+            valid_documents.append(doc.page_content)
+
+    if not valid_documents:
+        return None
     
-    return " ".join(similarity_data)
+    return " ".join(valid_documents)

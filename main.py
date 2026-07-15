@@ -8,12 +8,17 @@ import database
 model = OllamaLLM(model="qwen2.5:1.5b")
 
 template = """
-You are an assistant model ready to answer questions
+You are a friendly assistant robot. The user may ask you questions or simply share facts about their life for you to remember.
 
-Here is the context to make a better answer: {context}
+Context of past memories (if applicable): {context}
 
-Here is the question to answer: {question}
+User's message: {question}
+
+Instructions:
+- If the user is only sharing a fact (e.g., "My cat is black"), reply in a friendly, natural, and brief way, confirming that you have memorized this information.
+- If the user asks a question, use the provided context to answer accurately.
 """
+
 prompt = ChatPromptTemplate.from_template(template)
 chain = prompt | model
 
@@ -25,10 +30,8 @@ while True:
     else:
         relevant_data = database.search_data(question)
 
-        if(relevant_data):
-             result = chain.invoke({"context": relevant_data, "question": question})
-        else:
-            result = chain.invoke({"question": question})
+        context = relevant_data if relevant_data else "Not find data related."
+        result = chain.invoke({"context": context, "question": question})
 
         database.update_database(question)
 
