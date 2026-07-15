@@ -19,39 +19,39 @@ This is a local intelligent assistant designed to run on a Virtual Machine (VM -
 
 Follow these steps to set up your environment and run the assistant on your machine.
 
-### 1. Set Up the Ollama Server
+# 1. Set Up the Ollama Server
 Make sure Ollama is installed and running on your system, and that you have downloaded both required models:
 
-# Download the Large Language Model (LLM)
+## Download the Large Language Model (LLM)
 ```bash
 ollama pull qwen2.5:1.5b
 ```
 
-# Download the dedicated Embeddings model
+## Download the dedicated Embeddings model
 ```bash
 ollama pull nomic-embed-text
 ```
 
-### 2. Set Up Local Environment
+# 2. Set Up Local Environment
 
 Open a terminal in your VM and run the following commands:
 
-# 1. Navigate to the project directory
+## 1. Navigate to the project directory
 ```bash
 cd ~/robo_ia
 ```
 
-# 2. Activate the virtual environment
+## 2. Activate the virtual environment
 ```bash
 source venv/bin/activate
 ```
 
-# 3. Ensure all dependencies are installed
+## 3. Ensure all dependencies are installed
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Run the model
+# 3. Run the model
 
 With your virtual environment active, run the main script:
 
