@@ -1,14 +1,14 @@
+#External libraries
 from langchain_ollama.llms import OllamaLLM
 from langchain_core.prompts import ChatPromptTemplate
 from datetime import datetime, timedelta
-import sys  
-import json
-import os
 
+#Local Files
 import database
 import websearch
 
 
+#Especify the parameters to do a search in DuckDuckGo
 def generate_search_query(user_question, model):
     current_date = datetime.now().strftime("%B %d, %Y")
     
@@ -33,7 +33,7 @@ def generate_search_query(user_question, model):
     query = fast_model.invoke(prompt).strip().replace('"', '')
     return query
 
-
+#Identify what type of data the model needs to process
 def type_of_search(query, model):
     prompt = f"""
     Analyze the user query and classify its intent.
@@ -47,7 +47,6 @@ def type_of_search(query, model):
     Query: {query}
     Class:"""
     
-    # Usamos o modelo rápido com temperatura 0 para decidir
     fast_model = model.bind(options={"temperature": 0.0, "num_predict": 5})
     decision = fast_model.invoke(prompt).strip().upper()
     return decision
@@ -81,36 +80,31 @@ def main():
         else:
 
             intent = type_of_search(question, model)
-            print(f"[DEBUG INTENT] A intenção detetada foi: {intent}")
+            #print(f"[DEBUG] Type of search: {intent}")
 
             context = ""
 
             if intent == "INTERNET":
-                # Força a pesquisa web!
                 optimized_query = generate_search_query(question, model)
-                print(f"[INFO] Query otimizada: '{optimized_query}'")
-                print("[INFO] A pesquisar na internet...\n")
+                #print(f"[INFO] Optimized Query: '{optimized_query}'")
                 
                 result_web = websearch.search_web(optimized_query)
                 if result_web:
                     context = result_web
 
             elif intent == "MEMORY":
-                # Procura apenas na Base de Dados Local!
                 relevant_data = database.search_data(question)
-                print(f"[DEBUG BD] Conteúdo retornado da BD: '{relevant_data}'")
+                #print(f"[DEBUG BD] Content from DB: '{relevant_data}'")
                 
                 if relevant_data and str(relevant_data).strip() not in ["", "None", "[]"]:
                     context = relevant_data
-                    print("[INFO] Usando memória local...\n")
                 else:
-                    print("[INFO] Memória vazia para esta pergunta...\n")
+                    print("[INFO] There's no data to this question\n")
 
             else:
-                # CASUAL (Conversa normal, sem contexto)
-                print("[INFO] Conversa informal...\n")
+                print("[INFO] Casual Talk...\n")
 
-            print("Robot: ", end="")
+            print("AI: ", end="")
             
             #streaming option
             for chunk in chain.stream({"context": context, "question": question}):
@@ -118,8 +112,9 @@ def main():
             
             print("\n\n" + "-"*50 + "\n")
 
-            database.update_database(question)
-
+            if intent == "MEMORY" and not question.strip().endswith("?"):
+                database.update_database(question)
+                print("[INFO] New personal data saved in DB!")
 
 if __name__ == "__main__":
     main()
