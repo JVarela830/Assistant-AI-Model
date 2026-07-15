@@ -19,6 +19,7 @@ This is a local intelligent assistant designed to run on a Virtual Machine (VM -
 
 Unlike standard RAG systems that query everything simultaneously (clogging the RAM of a Raspberry Pi), this assistant uses a **Zero-Shot Intent Classifier** before processing any query:
 
+```
                   [ User Input ]
                         │
               ┌─────────┴─────────┐
@@ -26,11 +27,11 @@ Unlike standard RAG systems that query everything simultaneously (clogging the R
       [ Intent Classifier (Qwen 2.5:3b) ]
       /                 │                 \
      /                  │                  \
-
 (INTERNET)             (MEMORY)            (CASUAL)
     ▼                     ▼                    ▼
 [Web Search RAG]    [ChromaDB Retrieval]   [Direct Response]
 (Live & Hist.)       (Personal Facts)      (No context needed)
+```
 
 1. **INTERNET:** Triggered for general knowledge, sports, weather, or history (e.g., *"When did the World War II start?"*). It automatically generates keyword-optimized search queries.
 2. **MEMORY:** Triggered for personal questions (e.g., *"What is my dog's name?"*). It queries ChromaDB. If the user makes an assertive statement (e.g., *"My favorite color is blue"*), it **automatically saves** it as a new memory.
