@@ -22,7 +22,6 @@ Follow these steps to set up your environment and run the assistant on your mach
 ### 1. Set Up the Ollama Server
 Make sure Ollama is installed and running on your system, and that you have downloaded both required models:
 
-```bash
 # Download the Large Language Model (LLM)
 ollama pull qwen2.5:1.5b
 
