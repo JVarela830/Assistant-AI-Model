@@ -21,7 +21,7 @@ Follow these steps to set up your environment and run the assistant on your mach
 
 If you are working with the VM, you can open a terminal in your PC to interact easier with the terminal of the server:
 ```bash
-ssh robot@192.168.1.195
+ssh robot@192.168.1.195 (or the IP that the VM gets)
 ```
 
 
