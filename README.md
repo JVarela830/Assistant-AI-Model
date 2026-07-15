@@ -8,10 +8,33 @@ This is a local intelligent assistant designed to run on a Virtual Machine (VM -
 
 * **Python 3.12+**
 * **Ollama** (for running local models)
-  * LLM: `qwen2.5:1.5b` (temporaly)
+  * LLM: `ollama pull qwen2.5:3b` (temporaly)
   * Embeddings: `nomic-embed-text` (temporaly)
 * **LangChain** (RAG orchestration)
 * **ChromaDB** (Vector database for local memory persistence)
+
+---
+
+## 🧠 Intelligent Routing System (How it Works) - (Early Architecture)
+
+Unlike standard RAG systems that query everything simultaneously (clogging the RAM of a Raspberry Pi), this assistant uses a **Zero-Shot Intent Classifier** before processing any query:
+
+                  [ User Input ]
+                        │
+              ┌─────────┴─────────┐
+              ▼                   ▼
+      [ Intent Classifier (Qwen 2.5:3b) ]
+      /                 │                 \
+     /                  │                  \
+
+(INTERNET)             (MEMORY)            (CASUAL)
+    ▼                     ▼                    ▼
+[Web Search RAG]    [ChromaDB Retrieval]   [Direct Response]
+(Live & Hist.)       (Personal Facts)      (No context needed)
+
+1. **INTERNET:** Triggered for general knowledge, sports, weather, or history (e.g., *"When did the World War II start?"*). It automatically generates keyword-optimized search queries.
+2. **MEMORY:** Triggered for personal questions (e.g., *"What is my dog's name?"*). It queries ChromaDB. If the user makes an assertive statement (e.g., *"My favorite color is blue"*), it **automatically saves** it as a new memory.
+3. **CASUAL:** For greetings and small talk, saving computation power and bypassing all database queries.
 
 ---
 
@@ -30,7 +53,7 @@ Make sure Ollama is installed and running on your system, and that you have down
 
 ## Download the Large Language Model (LLM)
 ```bash
-ollama pull qwen2.5:1.5b
+ollama pull qwen2.5:3b
 ```
 
 ## Download the dedicated Embeddings model
