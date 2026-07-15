@@ -19,6 +19,12 @@ This is a local intelligent assistant designed to run on a Virtual Machine (VM -
 
 Follow these steps to set up your environment and run the assistant on your machine.
 
+If you are working with the VM, you can open a terminal in your PC to interact easier with the terminal of the server:
+```bash
+ssh robot@192.168.1.195
+```
+
+
 # 1. Set Up the Ollama Server
 Make sure Ollama is installed and running on your system, and that you have downloaded both required models:
 
